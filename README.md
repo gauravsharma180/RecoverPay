@@ -60,14 +60,10 @@ The service, with the UI:
 
 ```bash
 cd web && npm install && npm run build && cd ..
-uvicorn src.api:app --reload    # http://127.0.0.1:8000
+uvicorn src.api:app --reload    
 ```
 
 `/docs` has the interactive API reference. `/decide` is a dry run — it
 returns the decision and the rule behind it without moving any money.
 
-Optional model-written copy: copy `.env.example` to `.env` and set
-`GEMINI_API_KEY` (free tier at aistudio.google.com/apikey). Without a key,
-everything runs on templates and no metric changes either way.
 
-See `FAILURES.md` for what broke on the way here.
