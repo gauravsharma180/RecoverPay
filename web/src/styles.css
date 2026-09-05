@@ -1,0 +1,567 @@
+:root {
+  --paper: #e9ecf1;
+  --sheet: #ffffff;
+  --ink: #0c1522;
+  --muted: #626f82;
+  --rule: #ccd4e0;
+  --rule-soft: #e2e7ee;
+  --won: #10705a;
+  --won-soft: #d3e8e1;
+  --lost: #c3cdda;
+  --burn: #a63a2e;
+  --accent: #2749c9;
+  --accent-soft: #e0e6fa;
+
+  --sans: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+.num {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+.shell {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 32px 24px 80px;
+}
+
+/* ---------------------------------------------------------------- masthead */
+
+.masthead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px;
+  padding-bottom: 18px;
+  border-bottom: 2px solid var(--ink);
+}
+
+.wordmark {
+  margin: 0;
+  font-size: 30px;
+  font-weight: 600;
+  letter-spacing: -0.022em;
+}
+
+.standfirst {
+  margin: 4px 0 0;
+  max-width: 52ch;
+  color: var(--muted);
+}
+
+.controls {
+  display: flex;
+  align-items: flex-end;
+  gap: 14px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.field input,
+.field select {
+  font-family: var(--mono);
+  font-size: 14px;
+  color: var(--ink);
+  background: var(--sheet);
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  padding: 7px 9px;
+  width: 108px;
+}
+
+.field input:focus-visible,
+.field select:focus-visible,
+button:focus-visible,
+.cell:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+button {
+  font-family: var(--sans);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--sheet);
+  background: var(--ink);
+  border: 1px solid var(--ink);
+  border-radius: 3px;
+  padding: 8px 18px;
+  cursor: pointer;
+}
+
+button:hover:not(:disabled) {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* ------------------------------------------------------------------ blocks */
+
+section {
+  margin-top: 40px;
+}
+
+h2 {
+  margin: 0 0 4px;
+  font-size: 19px;
+  font-weight: 600;
+  letter-spacing: -0.012em;
+}
+
+.note {
+  margin: 0 0 18px;
+  max-width: 62ch;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.sheet {
+  background: var(--sheet);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  padding: 22px;
+}
+
+/* -------------------------------------------------------------- batch grid */
+
+/*
+ * Each row is [fixed-width label][flexible grid]. The label's width is fixed
+ * regardless of text length ("Blind retries" vs "Backoff retries" vs
+ * "RecoverPay") so every .grid gets the exact same content width, which
+ * makes auto-fill resolve to the same column count in all three - square N
+ * sits at the same position in every row.
+ */
+.run {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.run:last-child {
+  margin-bottom: 0;
+}
+
+.run-label {
+  flex: 0 0 156px;
+  width: 156px;
+  padding-top: 2px;
+}
+
+.run-name {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 5px;
+}
+
+.run-tally {
+  display: block;
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+.run-tally b {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.grid {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(10px, 1fr));
+  gap: 2px;
+}
+
+.cell {
+  aspect-ratio: 1;
+  border: 0;
+  border-radius: 1px;
+  padding: 0;
+  background: var(--lost);
+  cursor: pointer;
+  transition: transform 0.08s ease;
+}
+
+.cell.won {
+  background: var(--won);
+}
+
+.cell.picked {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+  transform: scale(1.45);
+  position: relative;
+  z-index: 2;
+}
+
+.reveal .cell {
+  animation: settle 0.28s ease both;
+}
+
+@keyframes settle {
+  from {
+    opacity: 0;
+    transform: translateY(-3px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal .cell {
+    animation: none;
+  }
+  .cell {
+    transition: none;
+  }
+}
+
+.key {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--rule-soft);
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.key span {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.swatch {
+  width: 11px;
+  height: 11px;
+  border-radius: 1px;
+}
+
+/* ------------------------------------------------------------------ ledger */
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+th,
+td {
+  padding: 9px 10px;
+  border-bottom: 1px solid var(--rule-soft);
+  text-align: right;
+}
+
+th:first-child,
+td:first-child {
+  text-align: left;
+  color: var(--muted);
+  font-weight: 400;
+}
+
+thead th {
+  border-bottom: 1px solid var(--rule);
+  font-weight: 600;
+  font-size: 13px;
+}
+
+tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+tr.total td {
+  border-top: 1px solid var(--ink);
+  padding-top: 12px;
+  font-weight: 600;
+}
+
+tr.total td:first-child {
+  color: var(--ink);
+}
+
+td.figure {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+}
+
+td.lead {
+  color: var(--won);
+  font-weight: 600;
+}
+
+td.harm {
+  color: var(--burn);
+  font-weight: 600;
+}
+
+/* -------------------------------------------------------------- two column */
+
+.split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+@media (max-width: 860px) {
+  .split {
+    grid-template-columns: 1fr;
+  }
+  .masthead {
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 560px) {
+  .run {
+    flex-direction: column;
+  }
+  .run-label {
+    width: 100%;
+    flex: 1 1 auto;
+  }
+}
+
+/* ------------------------------------------------------------- ask the engine */
+
+.form-rows {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.form-rows .field {
+  width: 100%;
+}
+
+.form-rows input,
+.form-rows select {
+  width: 100%;
+}
+
+.verdict {
+  margin-top: 20px;
+  padding-top: 18px;
+  border-top: 1px solid var(--rule);
+}
+
+.verdict-action {
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+}
+
+.verdict-action.stopped {
+  color: var(--burn);
+}
+
+.verdict-when {
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+.because {
+  margin: 14px 0 0;
+  padding: 12px 14px;
+  background: var(--accent-soft);
+  border-radius: 3px;
+  font-size: 14px;
+}
+
+.because .rule {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--accent);
+  display: block;
+  margin-bottom: 3px;
+}
+
+.contrast {
+  margin-top: 12px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.message {
+  margin-top: 14px;
+  padding: 14px;
+  border: 1px solid var(--rule);
+  border-left: 3px solid var(--won);
+  border-radius: 3px;
+  font-size: 14px;
+}
+
+.message-src {
+  display: block;
+  margin-top: 8px;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* ------------------------------------------------------------------- audit */
+
+.trail {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.trail li {
+  display: grid;
+  grid-template-columns: 62px 1fr;
+  gap: 14px;
+  padding: 11px 0;
+  border-bottom: 1px solid var(--rule-soft);
+}
+
+.trail li:last-child {
+  border-bottom: 0;
+}
+
+.clock {
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--muted);
+  padding-top: 1px;
+}
+
+.step-what {
+  font-weight: 500;
+}
+
+.step-why {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.outcome {
+  display: inline-block;
+  margin-left: 8px;
+  font-family: var(--mono);
+  font-size: 11px;
+  padding: 1px 6px;
+  border-radius: 2px;
+  vertical-align: 1px;
+}
+
+.outcome.captured {
+  background: var(--won-soft);
+  color: var(--won);
+}
+
+.outcome.failed {
+  background: #eef1f5;
+  color: var(--muted);
+}
+
+.outcome.blocked,
+.outcome.stopped {
+  background: #f6e4e1;
+  color: var(--burn);
+}
+
+.outcome.sent {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.tabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.tab {
+  background: transparent;
+  color: var(--muted);
+  border: 1px solid var(--rule);
+  padding: 5px 12px;
+  font-size: 13px;
+}
+
+.tab:hover:not(:disabled) {
+  background: transparent;
+  border-color: var(--ink);
+  color: var(--ink);
+}
+
+.tab.on {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--sheet);
+}
+
+.empty {
+  color: var(--muted);
+  font-size: 14px;
+  padding: 8px 0;
+}
+
+/* ------------------------------------------------------------ reason table */
+
+.bar-track {
+  display: block;
+  height: 7px;
+  width: 100%;
+  min-width: 90px;
+  background: var(--lost);
+  border-radius: 1px;
+  overflow: hidden;
+}
+
+.bar-fill {
+  display: block;
+  height: 100%;
+  background: var(--won);
+}
+
+td.bar-cell {
+  width: 34%;
+}
+
+.zero .bar-fill {
+  background: var(--burn);
+}
+
+footer {
+  margin-top: 48px;
+  padding-top: 16px;
+  border-top: 1px solid var(--rule);
+  font-size: 13px;
+  color: var(--muted);
+  max-width: 70ch;
+}

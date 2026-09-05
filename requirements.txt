@@ -1,0 +1,5 @@
+# The simulation core is stdlib only. These are for the service and the tests.
+fastapi>=0.110
+uvicorn[standard]>=0.29
+pytest>=8.0
+httpx>=0.27
